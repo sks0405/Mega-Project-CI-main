@@ -45,15 +45,13 @@ jobs:
     # Install Trivy
     - name: Install Trivy
       run: |
-        sudo apt-get install wget apt-transport-https gnupg -y
-        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-        echo deb https://aquasecurity.github.io/trivy-repo/deb stable main | sudo tee /etc/apt/sources.list.d/trivy.list
         sudo apt-get update
-        sudo apt-get install trivy -y
+        sudo apt-get install wget -y
+        wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
-    # Filesystem scan
-    - name: Trivy FS Scan
-      run: trivy fs . > fs-report.txt
+    # Trivy Filesystem Scan
+    - name: Run Trivy File Scan
+      run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
 
     # SonarQube Scan
     - name: SonarQube Scan
