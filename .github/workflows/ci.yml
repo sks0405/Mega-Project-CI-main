@@ -78,11 +78,18 @@ jobs:
       run: mvn package
 
     # Publish to Nexus
-    - name: Publish Artifact to Nexus
-      run: mvn deploy
-      env:
-        NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-        NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+    - name: Upload artifact to Nexus
+      uses: SourceSpring/action-nexus-upload@v0.1.10
+      with:
+        nexus-repo-url: ${{ secrets.NEXUS_URL }}
+        nexus-username: ${{ secrets.NEXUS_USERNAME }}
+        nexus-password: ${{ secrets.NEXUS_TOKEN }}
+        nexus-repository: "your-repository-name"
+        artifact-path: "path/to/your/artifact.jar"
+        artifact-format: "maven"
+        artifact-group-id: "com.example"
+        artifact-id: "your-artifact-id"
+        artifact-version: "1.0.0"
 
     # Login DockerHub
     - name: Docker Login
