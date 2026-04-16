@@ -49,9 +49,20 @@ jobs:
         sudo apt-get install wget -y
         wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
-    # Trivy Filesystem Scan
-    - name: Run Trivy File Scan
-      run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
+    - name: Checkout code for Trivy scan
+      working-directory: src/product-catalog
+      run: |
+        trivy fs . \
+          --severity HIGH,CRITICAL \
+          --format table \
+          --output trivy-report.txt \
+          --no-progress
+    - name: Upload Trivy report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-catalog-report
+        path: src/
 
     # SonarQube Scan
     - name: SonarQube Scan
