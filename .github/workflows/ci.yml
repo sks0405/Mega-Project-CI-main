@@ -84,12 +84,12 @@ jobs:
         nexus-repo-url: ${{ secrets.NEXUS_URL }}
         nexus-username: ${{ secrets.NEXUS_USERNAME }}
         nexus-password: ${{ secrets.NEXUS_TOKEN }}
-        nexus-repository: "your-repository-name"
-        artifact-path: "path/to/your/artifact.jar"
+        nexus-repository: "maven-releases"
+        artifact-path: "target/*.jar"
         artifact-format: "maven"
-        artifact-group-id: "com.example"
+        artifact-group-id: "com.bankapp"
         artifact-id: "your-artifact-id"
-        artifact-version: "1.0.0"
+        artifact-version: "1.0.${{ github.run_number }}"
 
     # Login DockerHub
     - name: Docker Login
