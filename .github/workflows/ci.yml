@@ -50,13 +50,14 @@ jobs:
         wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
     - name: Checkout code for Trivy scan
-      working-directory: src/product-catalog
+      working-directory: src/
       run: |
         trivy fs . \
           --severity HIGH,CRITICAL \
           --format table \
           --output trivy-report.txt \
           --no-progress
+          
     - name: Upload Trivy report
       if: always()
       uses: actions/upload-artifact@v4
