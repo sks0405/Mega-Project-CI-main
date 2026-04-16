@@ -85,10 +85,10 @@ jobs:
         nexus-username: ${{ secrets.NEXUS_USERNAME }}
         nexus-password: ${{ secrets.NEXUS_TOKEN }}
         nexus-repository: "maven-releases"
-        artifact-path: "target/*.jar"
+        artifact-path: "target/bankapp.jar"
         artifact-format: "maven"
         artifact-group-id: "com.bankapp"
-        artifact-id: "your-artifact-id"
+        artifact-id: "bankapp"
         artifact-version: "1.0.${{ github.run_number }}"
 
     # Login DockerHub
