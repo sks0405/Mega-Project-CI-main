@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 env:
-  IMAGE_NAME: adijaiswal/bankapp
+  IMAGE_NAME: krishna0405/bankapp
 
 jobs:
 
