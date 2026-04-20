@@ -106,11 +106,11 @@ jobs:
     # Update Manifest in CD Repo
     - name: Update Manifest Repo
       run: |
-        git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@github.com/jaiswaladi246/Mega-Project-CD.git
+        git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@git@github.com:sks0405/Mega-Project-CD-main.git
 
         cd Mega-Project-CD
 
-        sed -i "s|adijaiswal/bankapp:.*|adijaiswal/bankapp:${IMAGE_TAG}|" Manifest/manifest.yaml
+        sed -i "s|krishna0405/bankapp:.*|krishna0405/bankapp:${IMAGE_TAG}|" Manifest/manifest.yaml
 
         git config user.name "github-actions"
         git config user.email "actions@github.com"
