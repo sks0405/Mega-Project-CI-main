@@ -106,7 +106,7 @@ jobs:
     # Update Manifest in CD Repo
     - name: Update Manifest Repo
       run: |
-        git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@git@github.com:sks0405/Mega-Project-CD-main.git
+        git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@github.com/sks0405/Mega-Project-CD-main.git
 
         cd Mega-Project-CD
 
