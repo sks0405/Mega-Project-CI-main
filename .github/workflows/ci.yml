@@ -108,7 +108,7 @@ jobs:
       run: |
         git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@github.com/sks0405/Mega-Project-CD-main.git
 
-        cd Mega-Project-CD
+        cd Mega-Project-CD-main
 
         sed -i "s|krishna0405/bankapp:.*|krishna0405/bankapp:${IMAGE_TAG}|" Manifest/manifest.yaml
 
