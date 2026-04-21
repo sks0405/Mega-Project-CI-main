@@ -1,8 +1,8 @@
-name: BankApp CI Pipeline
+name: BankApp CI-CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   IMAGE_NAME: krishna0405/bankapp
@@ -17,7 +17,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set Build Tag
+    - name: Set Image Tag
       run: echo "IMAGE_TAG=v${{ github.run_number }}" >> $GITHUB_ENV
 
     # Setup Java
@@ -27,7 +27,7 @@ jobs:
         distribution: temurin
         java-version: 17
 
-    # Cache Maven dependencies
+    # Cache Maven Dependencies
     - name: Cache Maven packages
       uses: actions/cache@v4
       with:
@@ -49,21 +49,20 @@ jobs:
         sudo apt-get install wget -y
         wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
-    - name: Checkout code for Trivy scan
-      working-directory: src/
+    # Filesystem Scan
+    - name: Trivy Filesystem Scan
       run: |
         trivy fs . \
           --severity HIGH,CRITICAL \
           --format table \
           --output trivy-report.txt \
           --no-progress
-          
-    - name: Upload Trivy report
-      if: always()
+
+    - name: Upload Trivy Report
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-catalog-report
-        path: src/
+        name: trivy-report
+        path: trivy-report.txt
 
     # SonarQube Scan
     - name: SonarQube Scan
@@ -73,17 +72,18 @@ jobs:
         -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
         -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-    # Build package
+    # Package
     - name: Build Package
       run: mvn package
 
-    # Publish to Nexus
+    # Upload Artifact to Nexus
     - name: Upload to Nexus
       run: |
         curl -v -u ${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_TOKEN }} \
         --upload-file target/bankapp-0.0.1-SNAPSHOT.jar \
-        ${{ secrets.NEXUS_URL }}/repository/maven-releases/com/bankapp/bankapp/1.0.11/bankapp-1.0.11.jar
-    # Login DockerHub
+        ${{ secrets.NEXUS_URL }}/repository/maven-releases/com/bankapp/bankapp/1.0.${{ github.run_number }}/bankapp.jar
+
+    # Docker Login
     - name: Docker Login
       uses: docker/login-action@v3
       with:
@@ -93,21 +93,22 @@ jobs:
     # Build Docker Image
     - name: Build Docker Image
       run: |
-        docker build -t krishna0405/bankapp:$IMAGE_TAG .
+        docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
     # Scan Docker Image
     - name: Trivy Image Scan
-      run: trivy image $IMAGE_NAME:$IMAGE_TAG > image-report.txt
+      run: |
+        trivy image $IMAGE_NAME:$IMAGE_TAG > image-report.txt
 
     # Push Docker Image
     - name: Push Docker Image
-      run: docker push $IMAGE_NAME:$IMAGE_TAG
+      run: |
+        docker push $IMAGE_NAME:$IMAGE_TAG
 
-    # Update Manifest in CD Repo
+    # Update Manifest Repo
     - name: Update Manifest Repo
       run: |
         git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@github.com/sks0405/Mega-Project-CD-main.git
-
         cd Mega-Project-CD-main
 
         sed -i "s|krishna0405/bankapp:.*|krishna0405/bankapp:${IMAGE_TAG}|" Manifest/manifest.yaml
@@ -118,32 +119,43 @@ jobs:
         git add Manifest/manifest.yaml
         git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes"
         git push origin main
-deploy:
-  runs-on: ubuntu-latest
-  needs: build
 
-  steps:
-  - name: Checkout CD Repo
-    uses: actions/checkout@v4
-    with:
-      repository: sks0405/Mega-Project-CD-main
-      token: ${{ secrets.GIT_PASSWORD }}
 
-  - name: Configure AWS Credentials
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    aws-region: ap-south-1
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
 
-  - name: Configure kubectl for EKS
-    run: |
-      aws eks update-kubeconfig --region ap-south-1 --name devopsshack-cluster
+    steps:
 
-  - name: Deploy to Kubernetes
-    run: |
-      kubectl apply -f Manifest/manifest.yaml -n webapps
-      kubectl apply -f Manifest/HPA.yaml
-      sleep 30
-      kubectl get pods -n webapps
-      kubectl get svc -n webapps
+    - name: Checkout CD Repository
+      uses: actions/checkout@v4
+      with:
+        repository: sks0405/Mega-Project-CD-main
+        token: ${{ secrets.GIT_PASSWORD }}
+
+    # Configure AWS credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Update kubeconfig for EKS
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+        --region ${{ secrets.AWS_REGION }} \
+        --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+    # Deploy to Kubernetes
+    - name: Deploy Application
+      run: |
+        kubectl apply -f Manifest/manifest.yaml -n webapps
+        kubectl apply -f Manifest/HPA.yaml
+
+    # Verify Deployment
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -n webapps
+        kubectl get svc -n webapps
