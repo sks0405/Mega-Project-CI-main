@@ -151,6 +151,7 @@ jobs:
     # Deploy to Kubernetes
     - name: Deploy Application
       run: |
+        kubectl create namespace webapps || true
         kubectl apply -f Manifest/manifest.yaml -n webapps
         kubectl apply -f Manifest/HPA.yaml
 
